@@ -14,21 +14,23 @@ class LaserScanner(GiskardBehavior):
     Listens to a laser scanner topic, transforms it into a dict and writes it to the god map.
     """
 
-    def __init__(self, name, laser_scanner_topic=u'laser_scanner'):
+    def __init__(self, name, laser_scanner_topic=u'/hsrb/base_scan'):
         """
         :type js_identifier: str
         """
         super(LaserScanner, self).__init__(name)
         self.mls = None
-        #self.map_frame = self.get_god_map().get_data(identifier.map_frame)
         self.laser_scanner_topic = laser_scanner_topic
         self.lock = Queue(maxsize=1)
+        #self.logger.info("scanner inited")
 
     def setup(self, timeout=0.0):
         self.laser_scanner_sub = rospy.Subscriber(self.laser_scanner_topic, LaserScan, self.cb, queue_size=1)
+        #self.logger.info("scanner sub created topic : "+self.laser_scanner_topic)
         return super(LaserScanner, self).setup(timeout)
 
     def cb(self, data):
+        #self.logger.info("cb called")
         try:
             self.lock.get_nowait()
         except Empty:
@@ -36,6 +38,7 @@ class LaserScanner(GiskardBehavior):
         self.lock.put(data)
 
     def update(self):
+        #self.logger.info("update called")
         try:
             if self.mls is None:
                 ls = self.lock.get()
@@ -50,6 +53,9 @@ class LaserScanner(GiskardBehavior):
         #self.get_robot().base_pose = base_pose.pose
 
         self.god_map.set_data(identifier.laser_data, self.mls)
+        #self.logger.info("updated laser data")
+        #self.logger.info(str(self.get_god_map().get_data(identifier.laser_data)))
+
         return Status.SUCCESS
 
 def laser_msg_to_stored_data(msg):

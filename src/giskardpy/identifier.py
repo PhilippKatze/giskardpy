@@ -3,6 +3,8 @@ robot = world + [u'robot']
 fk_pose = robot + [u'get_fk_pose']
 fk_np = robot + [u'get_fk_np']
 joint_states = robot + [u'joint_state']
+laser_data = robot + [u'laser_data']
+
 last_joint_states = [u'last_joint_state']
 
 constraints_identifier = [u'constraints']
@@ -97,7 +99,6 @@ fft_duration = plugins + [u'WiggleCancel', u'fft_duration']
 amplitude_threshold = plugins + [u'WiggleCancel', u'amplitude_threshold']
 num_samples_in_fft = plugins + [u'WiggleCancel', u'window_size']
 frequency_range = plugins + [u'WiggleCancel', u'frequency_range']
-laser_data = plugins + [u'LaserScanner', u'laser_data']
 
 joint_convergence_threshold = plugins + [u'GoalReached', u'joint_convergence_threshold']
 GoalReached_window_size = plugins + [u'GoalReached', u'window_size']
