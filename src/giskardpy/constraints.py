@@ -2391,3 +2391,89 @@ class Close(Constraint):
     def make_constraints(self):
         for constraint in self.constraints:
             self.soft_constraints.update(constraint.get_constraints())
+
+
+class LaserCollisionAvoidance(Constraint):
+    goal = u'goal'
+    weight = u'weight'
+    max_velocity = u'max_velocity'
+    max_acceleration = u'max_acceleration'
+    goal_constraint = u'goal_constraint'
+
+    def __init__(self, god_map, joint_name, goal, weight=WEIGHT_BELOW_CA, max_velocity=1423, max_acceleration=1,
+                 goal_constraint=False):
+        """
+        TODO
+        :param joint_name: str
+        :param goal: float
+        :param weight: float, default WEIGHT_BELOW_CA
+        :param max_velocity: float, rad/s, default 1423, meaning the urdf/config limits are active
+        """
+        super(LaserCollisionAvoidance, self).__init__(god_map)
+        self.joint_name = joint_name
+        self.goal_constraint = goal_constraint
+
+        if not self.get_robot().is_joint_continuous(joint_name):
+            raise ConstraintException(u'{} called with non continuous joint {}'.format(self.__class__.__name__,
+                                                                                       joint_name))
+
+        params = {self.goal: goal,
+                  self.weight: weight,
+                  self.max_velocity: max_velocity,
+                  self.max_acceleration: max_acceleration}
+        self.save_params_on_god_map(params)
+
+    def make_constraints(self):
+        """
+        example:
+        name='JointPosition'
+        parameter_value_pair='{
+            "joint_name": "torso_lift_joint", #required
+            "goal_position": 0, #required
+            "weight": 1, #optional
+            "max_velocity": 1 #optional -- rad/s or m/s depending on joint; can not go higher than urdf limit
+        }'
+        :return:
+        """
+        #self.god_map.get_data(identifier.laser_data + ["ranges", "0"])
+        laser_scan = self.god_map.get_data(identifier.laser_data)
+        angle = laser_scan.angle_min
+
+        for i, range in enumerate(laser_scan.ranges):
+            if laser_scan.range_min <= range <= laser_scan.range_max:
+                x = range * w.cos(angle)
+                y = range * w.sin(angle)
+                logwarn(x + " " + y)
+
+
+        current_joint = self.get_input_joint_position(self.joint_name)
+
+        joint_goal = self.get_input_float(self.goal)
+        weight = self.get_input_float(self.weight)
+
+        max_acceleration = self.get_input_float(self.max_acceleration)
+        max_velocity = w.Min(self.get_input_float(self.max_velocity),
+                             self.get_robot().get_joint_velocity_limit_expr(self.joint_name))
+
+        error = w.shortest_angular_distance(current_joint, joint_goal)
+        # capped_err = self.limit_acceleration(current_joint, error, max_acceleration, max_velocity)
+        capped_err = self.limit_velocity(error, max_velocity)
+
+        # weight = self.magic_weight_function(w.Abs(error),
+        #                                     0.0, WEIGHTS[5],
+        #                                     np.pi / 8, WEIGHTS[4],
+        #                                     np.pi / 6, WEIGHTS[3],
+        #                                     np.pi / 4, WEIGHTS[1])
+
+        weight = self.normalize_weight(max_velocity, weight)
+
+        self.add_constraint('',
+                            lower=capped_err,
+                            upper=capped_err,
+                            weight=weight,
+                            expression=current_joint,
+                            goal_constraint=self.goal_constraint)
+
+    def __str__(self):
+        s = super(LaserCollisionAvoidance, self).__str__()
+        return u'{}/{}'.format(s, self.joint_name)
