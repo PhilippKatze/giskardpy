@@ -2400,7 +2400,7 @@ class LaserCollisionAvoidance(Constraint):
     max_acceleration = u'max_acceleration'
     goal_constraint = u'goal_constraint'
 
-    def __init__(self, god_map, joint_name, goal, weight=WEIGHT_BELOW_CA, max_velocity=1423, max_acceleration=1,
+    def __init__(self, god_map, joint_name, goal, weight=WEIGHT_BELOW_CA, max_velocity=1423, max_acceleration=1, idx=0,
                  goal_constraint=False):
         """
         TODO
@@ -2436,28 +2436,40 @@ class LaserCollisionAvoidance(Constraint):
         :return:
         """
         #self.god_map.get_data(identifier.laser_data + ["ranges", "0"])
-        laser_scan = self.god_map.get_data(identifier.laser_data)
-        angle = laser_scan.angle_min
+        #laser_pos = TODO
+        #angle = euler_from_quaternion([laser_pos.transform.rotation.x, laser_pos.transform.rotation.y, laser_pos.transform.rotation.z, laser_pos.transform.rotation.w])[2]
 
-        for i, range in enumerate(laser_scan.ranges):
-            if laser_scan.range_min <= range <= laser_scan.range_max:
-                x = range * w.cos(angle)
-                y = range * w.sin(angle)
-                logwarn(x + " " + y)
+        #json goal constraints aufrugfen
 
 
-        current_joint = self.get_input_joint_position(self.joint_name)
+        #Collision data type anschauen und die liste evtl adaptieren
 
-        joint_goal = self.get_input_float(self.goal)
+        #laser_scan = self.god_map.to_symbol(identifier.laser_data + ['angle_min'])
+        #angle_min = laser_scan.angle_min
+
+        obstacle_position = Point3Input(self.god_map.to_symbol, prefix=identifier.laser_data + [self.idx, u'get_obstacle_position']).get_expression()
+
+        robot_position = Point3Input(self.god_map.to_symbol, self.get_robot().get_non_base_movement_root)
+
+        distance = w.euclidean_distance(obstacle_position, robot_position)
+
+        obstacle_vector = obstacle_position - robot_position
+
+        goaway_vector = -obstacle_vector
+
+
+
+
+
         weight = self.get_input_float(self.weight)
 
-        max_acceleration = self.get_input_float(self.max_acceleration)
-        max_velocity = w.Min(self.get_input_float(self.max_velocity),
-                             self.get_robot().get_joint_velocity_limit_expr(self.joint_name))
+        #max_acceleration = self.get_input_float(self.max_acceleration)
+        #max_velocity = w.Min(self.get_input_float(self.max_velocity),
+                             #self.get_robot().get_joint_velocity_limit_expr(self.joint_name))
 
-        error = w.shortest_angular_distance(current_joint, joint_goal)
+        #error = w.shortest_angular_distance(current_joint, joint_goal)
         # capped_err = self.limit_acceleration(current_joint, error, max_acceleration, max_velocity)
-        capped_err = self.limit_velocity(error, max_velocity)
+        #capped_err = self.limit_velocity(error, max_velocity)
 
         # weight = self.magic_weight_function(w.Abs(error),
         #                                     0.0, WEIGHTS[5],
@@ -2465,13 +2477,25 @@ class LaserCollisionAvoidance(Constraint):
         #                                     np.pi / 6, WEIGHTS[3],
         #                                     np.pi / 4, WEIGHTS[1])
 
-        weight = self.normalize_weight(max_velocity, weight)
+        #weight = self.normalize_weight(max_velocity, weight)
 
-        self.add_constraint('',
-                            lower=capped_err,
-                            upper=capped_err,
+        self.add_constraint(u'cx',
+                            lower=diff[0],
+                            upper=diff[0],
                             weight=weight,
-                            expression=current_joint,
+                            expression=goaway_vector[0],
+                            goal_constraint=self.goal_constraint)
+        self.add_constraint(u'cy',
+                            lower=diff[1],
+                            upper=diff[1],
+                            weight=weight,
+                            expression=goaway_vector[1],
+                            goal_constraint=self.goal_constraint)
+        self.add_constraint(u'cz',
+                            lower=diff[2],
+                            upper=diff[2],
+                            weight=weight,
+                            expression=goaway_vector[2],
                             goal_constraint=self.goal_constraint)
 
     def __str__(self):

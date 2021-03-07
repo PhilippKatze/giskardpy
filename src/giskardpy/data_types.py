@@ -1,7 +1,7 @@
 from collections import OrderedDict, defaultdict, namedtuple
 
 import numpy as np
-from sortedcontainers import SortedKeyList
+from sortedcontainers import SortedKeyList, SortedList
 from giskardpy.tfwrapper import kdl_to_np, np_vector, np_point
 
 SoftConstraint = namedtuple(u'SoftConstraint', [u'lbA', u'ubA',
@@ -150,18 +150,17 @@ class Collision(object):
 
     def reverse(self):
         return Collision(link_a=self.get_original_link_b(),
-                      body_b=self.get_body_b(),
-                      link_b=self.get_original_link_a(),
-                      position_on_a=self.get_position_on_b_in_map(),
-                      position_on_b=self.get_position_on_a_in_map(),
-                      contact_normal=[-self.__contact_normal[0],
-                                      -self.__contact_normal[1],
-                                      -self.__contact_normal[2]],
-                      contact_distance=self.get_contact_distance())
+                         body_b=self.get_body_b(),
+                         link_b=self.get_original_link_a(),
+                         position_on_a=self.get_position_on_b_in_map(),
+                         position_on_b=self.get_position_on_a_in_map(),
+                         contact_normal=[-self.__contact_normal[0],
+                                         -self.__contact_normal[1],
+                                         -self.__contact_normal[2]],
+                         contact_distance=self.get_contact_distance())
 
 
 class Collisions(object):
-
 
     def __init__(self, robot, collision_list_size):
         """
@@ -176,8 +175,6 @@ class Collisions(object):
         def sort(x):
             return x.get_contact_distance()
 
-
-
         # @profile
         def default_f():
             return SortedKeyList([self._default_collision('', '', '')] * collision_list_size,
@@ -187,11 +184,10 @@ class Collisions(object):
 
         self.self_collisions = defaultdict(default_f)
         self.external_collision = defaultdict(default_f)
-        self.external_collision_long_key = defaultdict(lambda : self._default_collision('', '', ''))
+        self.external_collision_long_key = defaultdict(lambda: self._default_collision('', '', ''))
         self.all_collisions = set()
         self.number_of_self_collisions = defaultdict(int)
         self.number_of_external_collisions = defaultdict(int)
-
 
     # @profile
     def add(self, collision):
@@ -212,14 +208,12 @@ class Collisions(object):
             self.external_collision[key].add(collision)
             self.number_of_external_collisions[key] = min(self.collision_list_size,
                                                           self.number_of_external_collisions[key] + 1)
-            key_long = (collision.get_original_link_a(),collision.get_body_b(), collision.get_original_link_b())
+            key_long = (collision.get_original_link_a(), collision.get_body_b(), collision.get_original_link_b())
             if key_long not in self.external_collision_long_key:
                 self.external_collision_long_key[key_long] = collision
             else:
                 self.external_collision_long_key[key_long] = min(collision, self.external_collision_long_key[key_long],
-                                                            key=lambda x: x.get_contact_distance())
-
-
+                                                                 key=lambda x: x.get_contact_distance())
 
     def transform_closest_point(self, collision):
         """
@@ -230,7 +224,6 @@ class Collisions(object):
             return self.transform_self_collision(collision)
         else:
             return self.transform_external_collision(collision)
-
 
     def transform_self_collision(self, collision):
         """
@@ -260,7 +253,6 @@ class Collisions(object):
         collision.set_contact_normal_in_b(new_b_V_n[:-1])
         return collision
 
-
     def transform_external_collision(self, collision):
         """
         :type collision: Collision
@@ -278,7 +270,6 @@ class Collisions(object):
         collision.set_position_on_b_in_root(r_P_pb[:-1])
         collision.set_contact_normal_in_root(r_V_n[:-1])
         return collision
-
 
     def _default_collision(self, link_a, body_b, link_b):
         return Collision(link_a, body_b, link_b, [0, 0, 0], [0, 0, 0], [0, 0, 1], 100)
@@ -302,10 +293,8 @@ class Collisions(object):
         """
         return self.external_collision_long_key[link_a, body_b, link_b]
 
-
     def get_number_of_external_collisions(self, joint_name):
         return self.number_of_external_collisions[joint_name]
-
 
     # @profile
     def get_self_collisions(self, link_a, link_b):
@@ -321,14 +310,90 @@ class Collisions(object):
             return self.self_collisions[link_a, link_b]
         return self.default_result
 
-
     def get_number_of_self_collisions(self, link_a, link_b):
         return self.number_of_self_collisions[link_a, link_b]
-
 
     def __contains__(self, item):
         return item in self.self_collisions or item in self.external_collision
 
-
     def items(self):
         return self.all_collisions
+
+
+class LaserCollision(object):
+    # TODO why no named tuple?
+    def __init__(self, obstacle_position, contact_normal, contact_distance):
+        self.obstacle_position = obstacle_position
+        self.__contact_distance = contact_distance
+        self.__contact_normal = contact_normal
+
+    def get_obstacle_position(self):
+        return self.obstacle_position
+
+    def get_contact_normal_in_map(self):
+        return self.__contact_normal
+
+    def get_contact_distance(self):
+        return self.__contact_distance
+
+
+class LaserCollisions(object):
+
+    def __init__(self, robot, collision_list_size):
+        """
+        :type robot: giskardpy.robot.Robot
+        """
+        self.robot = robot
+        self.root_T_map = kdl_to_np(self.robot.root_T_map)
+        self.robot_root = self.robot.get_root()
+        self.collision_list_size = collision_list_size
+
+        # @profile
+        def sort(x):
+            return x.get_contact_distance()
+
+        # @profile
+        def default_f():
+            return SortedList([self._default_collision()] * collision_list_size,
+                              key=lambda x: x.get_contact_distance())
+
+        self.default_result = default_f()
+
+        self.external_collision = defaultdict(default_f)
+        self.number_of_external_collisions = defaultdict(int)
+
+    # @profile
+    def add(self, collision):
+        """
+        :type collision: LaserCollision
+        :return:
+        """
+        #TODO Parameter anpassen
+        collision = self.transform_closest_point(collision)
+
+        self.external_collision.add(collision)
+        self.number_of_external_collisions = self.number_of_external_collisions + 1
+
+    def transform_closest_point(self, collision):
+        """
+        :type collision: LaserCollision
+        :rtype: Collision
+        """
+        return self.transform_external_collision(collision)
+
+    def transform_external_collision(self, collision):
+        """
+        :type collision: LaserCollision
+        :rtype: Collision
+        """
+
+        return collision
+
+    def _default_collision(self):
+        return Collision([0, 0, 0], [0, 0, 1], 100)
+
+    def get_number_of_external_collisions(self):
+        return self.number_of_external_collisions
+
+    def __contains__(self, item):
+        return item in self.external_collision
