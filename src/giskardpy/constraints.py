@@ -2449,7 +2449,9 @@ class LaserCollisionAvoidance(Constraint):
 
         obstacle_position = Point3Input(self.god_map.to_symbol, prefix=identifier.laser_data + [self.idx, u'get_obstacle_position']).get_expression()
 
-        robot_position = Point3Input(self.god_map.to_symbol, self.get_robot().get_non_base_movement_root)
+        robot_position = \
+            w.position_of(self.get_fk(self.get_robot().get_root(), self.get_robot().get_non_base_movement_root()))
+        #Point3Input(self.god_map.to_symbol, self.get_robot().get_non_base_movement_root)
 
         distance = w.euclidean_distance(obstacle_position, robot_position)
 
@@ -2457,9 +2459,14 @@ class LaserCollisionAvoidance(Constraint):
 
         goaway_vector = -obstacle_vector
 
+        temp_avoidance_distance = 2  #TODO Rosparam oder andere option
 
+        goaway_vector = w.if_lower(distance, temp_avoidance_distance,
+                                   goaway_vector,
+                                   [0, 0, 0]
+                                   )
 
-
+        goaway_vector = w.scale(goaway_vector, temp_avoidance_distance)
 
         weight = self.get_input_float(self.weight)
 
@@ -2480,23 +2487,18 @@ class LaserCollisionAvoidance(Constraint):
         #weight = self.normalize_weight(max_velocity, weight)
 
         self.add_constraint(u'cx',
-                            lower=diff[0],
-                            upper=diff[0],
+                            lower=goaway_vector[0],
+                            upper=goaway_vector[0],
                             weight=weight,
-                            expression=goaway_vector[0],
+                            expression=robot_position[0],
                             goal_constraint=self.goal_constraint)
         self.add_constraint(u'cy',
-                            lower=diff[1],
-                            upper=diff[1],
+                            lower=goaway_vector[1],
+                            upper=goaway_vector[1],
                             weight=weight,
-                            expression=goaway_vector[1],
+                            expression=robot_position[1],
                             goal_constraint=self.goal_constraint)
-        self.add_constraint(u'cz',
-                            lower=diff[2],
-                            upper=diff[2],
-                            weight=weight,
-                            expression=goaway_vector[2],
-                            goal_constraint=self.goal_constraint)
+
 
     def __str__(self):
         s = super(LaserCollisionAvoidance, self).__str__()

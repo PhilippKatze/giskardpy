@@ -1,6 +1,8 @@
 from copy import deepcopy
 import numpy as np
 import pytest
+
+import roslaunch
 import rospy
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 from giskard_msgs.msg import MoveGoal, MoveResult
@@ -36,12 +38,28 @@ def ros(request):
         pass
 
     logging.loginfo(u'init ros')
-    rospy.init_node(u'tests')
+    rospy.init_node('tests')
     tf_init(60)
+    launch = roslaunch.scriptapi.ROSLaunch()
+    launch.start()
+
+    rospy.set_param('/joint_trajectory_splitter/state_topics',
+                    ["/hsrb/arm_trajectory_controller/state",
+                     "/hsrb/omni_base_controller/state",
+                     "/hsrb/head_trajectory_controller/state"])
+    rospy.set_param('/joint_trajectory_splitter/client_topics',
+                    ["/hsrb/arm_trajectory_controller/follow_joint_trajectory",
+                     "/hsrb/omni_base_controller/follow_joint_trajectory",
+                     "/hsrb/head_trajectory_controller/follow_joint_trajectory"])
+    node = roslaunch.core.Node('giskardpy', 'joint_trajectory_splitter.py', name='joint_trajectory_splitter')
+    joint_trajectory_splitter = launch.launch(node)
 
     def kill_ros():
+        joint_trajectory_splitter.stop()
+        rospy.delete_param('/joint_trajectory_splitter/state_topics')
+        rospy.delete_param('/joint_trajectory_splitter/client_topics')
         logging.loginfo(u'shutdown ros')
-        rospy.signal_shutdown(u'die')
+        rospy.signal_shutdown('die')
         try:
             logging.loginfo(u'deleting tmp test folder')
             # shutil.rmtree(folder_name)
@@ -49,7 +67,6 @@ def ros(request):
             pass
 
     request.addfinalizer(kill_ros)
-
 
 @pytest.fixture(scope=u'module')
 def giskard(request, ros):
@@ -112,6 +129,17 @@ class TestJointGoals(object):
 class TestCartGoals(object):
 
     def test_rotate_gripper(self, zero_pose):
+        """
+        :type zero_pose: HSR
+        """
+        r_goal = PoseStamped()
+        r_goal.header.frame_id = zero_pose.tip
+        r_goal.pose.orientation = Quaternion(*quaternion_about_axis(pi, [0, 0, 1]))
+        zero_pose.set_and_check_cart_goal(r_goal, zero_pose.tip)
+
+class TestConstraints(object):
+
+    def test_laser_constraint_1(self, zero_pose):
         """
         :type zero_pose: HSR
         """

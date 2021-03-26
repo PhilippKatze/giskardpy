@@ -16,7 +16,7 @@ from giskard_msgs.srv import UpdateWorldResponse
 from hypothesis import assume
 from hypothesis.strategies import composite
 from iai_naive_kinematics_sim.srv import SetJointState, SetJointStateRequest
-from iai_wsg_50_msgs.msg import PositionCmd
+#from iai_wsg_50_msgs.msg import PositionCmd
 from numpy import pi
 from py_trees import Blackboard
 from sensor_msgs.msg import JointState
