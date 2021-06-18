@@ -103,6 +103,11 @@ def pybullet_pose_to_msg(pose):
     pose.pose.orientation = Quaternion(*orientation)
     return pose
 
+def raytracing_pybullet(startPositions, endingPositions):
+    p.stepSimulation()
+    res = p.rayTestBatch(startPositions, endingPositions)
+    resu = filter(lambda x: x[0] != -1, res)
+    return map(lambda x: x[3], resu)
 
 def msg_to_pybullet_pose(msg):
     """

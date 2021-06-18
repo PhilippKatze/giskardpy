@@ -2,14 +2,19 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
+import giskardpy.tfwrapper as tf
 import roslaunch
 import rospy
-from geometry_msgs.msg import PoseStamped, Point, Quaternion
+from geometry_msgs.msg import PoseStamped, Point, Quaternion, Vector3Stamped, Pose
 from giskard_msgs.msg import MoveGoal, MoveResult
 from numpy import pi
+from py_trees import Blackboard
 from tf.transformations import quaternion_from_matrix, quaternion_about_axis
 
-from giskardpy import logging
+from giskardpy import logging, identifier
+from giskardpy.constraints import LaserCollisionAvoidance
+from giskardpy.data_types import LaserCollision, LaserCollisions
+from giskardpy.identifier import robot
 from giskardpy.tfwrapper import init as tf_init
 from utils_for_tests import PR2, HSR
 
@@ -100,6 +105,16 @@ def zero_pose(resetted_giskard):
     resetted_giskard.send_and_check_goal()
     return resetted_giskard
 
+@pytest.fixture()
+def kitchen_setup(zero_pose):
+    """
+    :type resetted_giskard: GiskardTestWrapper
+    :return:
+    """
+    object_name = u'kitchen'
+    zero_pose.add_urdf(object_name, rospy.get_param(u'kitchen_description'),
+                              tf.lookup_pose(u'map', u'iai_kitchen/world'))
+    return zero_pose
 
 @pytest.fixture()
 def box_setup(zero_pose):
@@ -139,15 +154,31 @@ class TestCartGoals(object):
 
 class TestConstraints(object):
 
-    def test_laser_constraint_1(self, zero_pose):
-        """
-        :type zero_pose: HSR
-        """
-        r_goal = PoseStamped()
-        r_goal.header.frame_id = zero_pose.tip
-        r_goal.pose.orientation = Quaternion(*quaternion_about_axis(pi, [0, 0, 1]))
-        zero_pose.set_and_check_cart_goal(r_goal, zero_pose.tip)
+    def test_laser_constraint_1(self, kitchen_setup):
 
+        #Error hier
+        #camera poisition kein z?
+        #spawnen objekte in bulletworld mocken der tests?
+        #
+        goalpose = PoseStamped()
+        goalpose.pose.position = Point(0, 0, 0)
+        goalpose.pose.orientation.w = 1
+        goalpose.header.frame_id = "map"
+        boxpose = PoseStamped()
+        boxpose.pose.position = Point(0, 0.5, 0)
+        boxpose.pose.orientation.w = 1
+        boxpose.header.frame_id = "map"
+
+        kitchen_setup.move_base(goalpose)
+        kitchen_setup.add_box(u'nursoda', (0.1, 0.1, 0.5), boxpose)
+
+        for i in range(10):
+            kitchen_setup.add_json_goal(u'LaserCollisionAvoidance', idx=i)
+        kitchen_setup.allow_all_collisions()
+        kitchen_setup.send_and_check_goal()
+        expected_x = tf.lookup_point("map", "base_footprint")
+        np.testing.assert_almost_equal(expected_x.point.y, 0, 1)
+        np.testing.assert_almost_equal(expected_x.point.z, 0, 1)
 
 class TestCollisionAvoidanceGoals(object):
 

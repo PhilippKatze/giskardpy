@@ -13,7 +13,7 @@ from rospy_message_converter.message_converter import convert_ros_message_to_dic
 
 import giskardpy.constraints
 import giskardpy.identifier as identifier
-from giskardpy.constraints import SelfCollisionAvoidance, ExternalCollisionAvoidance
+from giskardpy.constraints import SelfCollisionAvoidance, ExternalCollisionAvoidance, LaserCollisionAvoidance
 from giskardpy.data_types import JointConstraint
 from giskardpy.exceptions import ImplementationException, UnknownConstraintException, InvalidGoalException, \
     ConstraintInitalizationException, GiskardException
@@ -247,6 +247,22 @@ class GoalToConstraints(GetGoal):
         loginfo('adding {} external collision avoidance constraints'.format(num_external))
         self.soft_constraints.update(soft_constraints)
         self.get_god_map().set_data(identifier.maximum_collision_threshold, maximum_distance)
+
+    def add_laser_collision_avoidance_constraints(self, soft_threshold_override=None):
+        soft_constraints = {}
+        number_of_repeller = 2 #self.get_god_map().get_data(identifier.external_collision_avoidance_repeller)
+        number_of_repeller_eef = 2 #self.get_god_map().get_data(identifier.external_collision_avoidance_repeller_eef)
+        movement_joints = ["odom_x", "odom_y"] #urdf hsr
+        maximum_distance = self.get_god_map().get_data(identifier.maximum_collision_threshold)
+
+        for i in range(number_of_repeller):
+            constraint = LaserCollisionAvoidance(self.god_map, idx=i)
+            soft_constraints.update(constraint.get_constraints())
+
+        num_external = len(soft_constraints)
+        loginfo('adding {} laser collision avoidance constraints'.format(num_external))
+        self.soft_constraints.update(soft_constraints)
+        #self.get_god_map().set_data(identifier.maximum_collision_threshold, maximum_distance)
 
     def add_self_collision_avoidance_constraints(self):
         counter = defaultdict(int)

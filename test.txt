@@ -1,0 +1,466 @@
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.17, pytest-3.3.2, py-1.5.2, pluggy-0.6.0
+hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('/home/philipp/bachelorarbeit/bp_ws/src/giskardpy/.hypothesis/examples')
+rootdir: /home/philipp/bachelorarbeit/bp_ws/src/giskardpy, inifile:
+plugins: hypothesis-4.34.0
+pybullet build time: Oct  8 2020 00:08:00
+collected 1 item
+
+test/test_integration_hsr.py [INFO] [1624013883.277507, 13999.308000]: [/tests]: --> added nursoda to world
+[INFO] [1624013883.942117, 13999.937000]: [/tests]: parsing goal message
+[INFO] [1624013883.943473, 13999.939000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.946178, 13999.942000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.948264, 13999.944000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.951018, 13999.946000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.954922, 13999.949000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.957863, 13999.952000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.960115, 13999.955000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.962157, 13999.955000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.965123, 13999.955000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.967670, 13999.960000]: [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+[INFO] [1624013883.970190, 13999.961000]: [/tests]: done parsing goal message
+[INFO] [1624013884.200652, 14000.181000]: [/tests]: constructing new controller with 60 soft constraints...
+[INFO] [1624013884.206775, 14000.186000]: [/tests]: computed Jacobian in 0.00090s
+[INFO] [1624013884.214697, 14000.190000]: [/tests]: compiled symbolic expressions in 0.00233s
+[INFO] [1624013973.789898, 14083.273000]: [/tests]: found goal trajectory with length 23.65s in 89.8169760704s
+F                                           [100%][INFO] [1624014001.481786, 14109.630000]: [/tests]: stopping plugins
+[1m[joint_trajectory_splitter-1] process has finished cleanly
+log file: /home/philipp/.ros/log/68569da0-d004-11eb-b18b-d037457c7836/joint_trajectory_splitter-1*.log[0m
+[INFO] [1624014002.088153, 14110.201000]: [/tests]: shutdown ros
+[INFO] [1624014002.230062, 14110.245000]: [/tests]: deleting tmp test folder
+
+
+=================================== FAILURES ===================================
+___________________ TestConstraints.test_laser_constraint_1 ____________________
+
+self = <test_integration_hsr.TestConstraints object at 0x7f1117a6e650>
+kitchen_setup = <utils_for_tests.HSR object at 0x7f1117a6ea10>
+
+    def test_laser_constraint_1(self, kitchen_setup):
+    
+        #Error hier
+        #camera poisition kein z?
+        #spawnen objekte in bulletworld mocken der tests?
+        #
+        goalpose = PoseStamped()
+        goalpose.pose.position = Point(0, 0, 0)
+        goalpose.pose.orientation.w = 1
+        goalpose.header.frame_id = "map"
+        boxpose = PoseStamped()
+        boxpose.pose.position = Point(0, 0.5, 0)
+        boxpose.pose.orientation.w = 1
+        boxpose.header.frame_id = "map"
+    
+        kitchen_setup.move_base(goalpose)
+        kitchen_setup.add_box(u'nursoda', (0.1, 0.1, 0.5), boxpose)
+    
+        for i in range(10):
+            kitchen_setup.add_json_goal(u'LaserCollisionAvoidance', idx=i)
+        kitchen_setup.allow_all_collisions()
+        kitchen_setup.send_and_check_goal()
+        expected_x = tf.lookup_point("map", "base_footprint")
+>       np.testing.assert_almost_equal(expected_x.point.y, 0, 1)
+E       AssertionError: 
+E       Arrays are not almost equal to 1 decimals
+E        ACTUAL: 0.17496639845721312
+E        DESIRED: 0
+
+test/test_integration_hsr.py:180: AssertionError
+------------------------------ Captured log setup ------------------------------
+logging.py                  47 INFO     [/unnamed]: deleting tmp test folder
+logging.py                  47 INFO     [/unnamed]: init ros
+------------------------------ Captured log call -------------------------------
+logging.py                  47 INFO     [/tests]: parsing goal message
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'JointPositionList'
+logging.py                  47 INFO     [/tests]: done parsing goal message
+logging.py                  47 INFO     [/tests]: constructing new controller with 3 soft constraints...
+logging.py                  47 INFO     [/tests]: computed Jacobian in 0.00022s
+logging.py                  47 INFO     [/tests]: compiled symbolic expressions in 0.00061s
+logging.py                  47 INFO     [/tests]: found loop, stopped planning.
+logging.py                  47 INFO     [/tests]: found goal trajectory with length 1.05s in 4.01615977287s
+tcpros_base.py             640 DEBUG    [/tests/update_world]: writing header
+tcpros_service.py          233 DEBUG    connection from 127.0.0.1:49204
+tcpros_base.py             640 DEBUG    [/tests/update_world]: writing header
+logging.py                  47 INFO     [/tests]: --> added nursoda to world
+tcpros_base.py             640 DEBUG    [/tests/get_object_names]: writing header
+tcpros_service.py          233 DEBUG    connection from 127.0.0.1:49208
+tcpros_base.py             640 DEBUG    [/tests/get_object_names]: writing header
+tcpros_base.py             640 DEBUG    [/tests/get_object_info]: writing header
+tcpros_service.py          233 DEBUG    connection from 127.0.0.1:49212
+tcpros_base.py             640 DEBUG    [/tests/get_object_info]: writing header
+logging.py                  47 INFO     [/tests]: parsing goal message
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: adding constraint of type: 'LaserCollisionAvoidance'
+logging.py                  47 INFO     [/tests]: done parsing goal message
+logging.py                  47 INFO     [/tests]: constructing new controller with 60 soft constraints...
+logging.py                  47 INFO     [/tests]: computed Jacobian in 0.00090s
+logging.py                  47 INFO     [/tests]: compiled symbolic expressions in 0.00233s
+logging.py                  47 INFO     [/tests]: found goal trajectory with length 23.65s in 89.8169760704s
+---------------------------- Captured log teardown -----------------------------
+logging.py                  47 INFO     [/tests]: stopping plugins
+nodeprocess.py             503 DEBUG    process[joint_trajectory_splitter-1].stop() starting
+nodeprocess.py             402 INFO     process[joint_trajectory_splitter-1]: killing os process with pid[8148] pgid[8148]
+nodeprocess.py             406 INFO     [joint_trajectory_splitter-1] sending SIGINT to pgid [8148]
+nodeprocess.py             408 INFO     [joint_trajectory_splitter-1] sent SIGINT to pgid [8148]
+tcpros_base.py             640 DEBUG    [/whole_body_controller/follow_joint_trajectory/result]: writing header
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:37535 (http://philipp:46883/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+tcpros_base.py             640 DEBUG    [/whole_body_controller/follow_joint_trajectory/status]: writing header
+tcpros_base.py             640 DEBUG    [/whole_body_controller/follow_joint_trajectory/feedback]: writing header
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:37535 (http://philipp:46883/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:37535 (http://philipp:46883/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+masterslave.py             115 DEBUG    publisherUpdate('/master', '/whole_body_controller/follow_joint_trajectory/result', [])
+masterslave.py             147 DEBUG    publisherUpdate('/master', '/whole_body_controller/follow_joint_trajectory/result', []) returns (1, '', 0)
+masterslave.py             115 DEBUG    publisherUpdate('/master', '/whole_body_controller/follow_joint_trajectory/status', [])
+masterslave.py             147 DEBUG    publisherUpdate('/master', '/whole_body_controller/follow_joint_trajectory/status', []) returns (1, '', 0)
+masterslave.py             115 DEBUG    publisherUpdate('/master', '/whole_body_controller/follow_joint_trajectory/feedback', [])
+masterslave.py             147 DEBUG    publisherUpdate('/master', '/whole_body_controller/follow_joint_trajectory/feedback', []) returns (1, '', 0)
+core.py                    137 DEBUG    removing connection to /joint_trajectory_splitter, connection error detected
+core.py                    140 INFO     topic[/whole_body_controller/follow_joint_trajectory/goal] removing connection to /joint_trajectory_splitter
+core.py                    137 DEBUG    removing connection to /joint_trajectory_splitter, connection error detected
+core.py                    140 INFO     topic[/whole_body_controller/follow_joint_trajectory/cancel] removing connection to /joint_trajectory_splitter
+tcpros_base.py             355 WARNING  Inbound TCP/IP connection failed: connection from sender terminated before handshake header received. 0 bytes were received. Please check sender for additional details.
+core.py                    143 ERROR    Inbound TCP/IP connection failed:
+Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 325, in _tcp_server_callback
+    header = read_ros_handshake_header(sock, StringIO(), buff_size)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rosgraph/network.py", line 359, in read_ros_handshake_header
+    raise ROSHandshakeException("connection from sender terminated before handshake header received. %s bytes were received. Please check sender for additional details."%b.tell())
+ROSHandshakeException: connection from sender terminated before handshake header received. 0 bytes were received. Please check sender for additional details.
+
+pmon.py                    564 DEBUG    Process[joint_trajectory_splitter-1] has died, respawn=False, required=False, exit_code=0
+pmon.py                    380 INFO     ProcessMonitor.unregister[joint_trajectory_splitter-1] starting
+pmon.py                    383 INFO     ProcessMonitor.unregister[joint_trajectory_splitter-1] complete
+nodeprocess.py             444 INFO     process[joint_trajectory_splitter-1]: SIGINT killed with return value 0
+nodeprocess.py             503 DEBUG    process[joint_trajectory_splitter-1].stop() starting
+nodeprocess.py             505 DEBUG    process[%s].stop(): popen is None, nothing to kill
+logging.py                  47 INFO     [/tests]: shutdown ros
+core.py                    556 INFO     signal_shutdown [die]
+registration.py            336 DEBUG    registration cleanup starting
+registration.py            365 DEBUG    unregisterSubscriber [/tests/command/feedback]
+registration.py            365 DEBUG    unregisterSubscriber [/whole_body_controller/follow_joint_trajectory/result]
+registration.py            365 DEBUG    unregisterSubscriber [/joint_states]
+registration.py            365 DEBUG    unregisterSubscriber [/tests/command/result]
+registration.py            365 DEBUG    unregisterSubscriber [/tf]
+registration.py            365 DEBUG    unregisterSubscriber [/tf_static]
+registration.py            365 DEBUG    unregisterSubscriber [/clock]
+registration.py            365 DEBUG    unregisterSubscriber [/whole_body_controller/follow_joint_trajectory/status]
+registration.py            365 DEBUG    unregisterSubscriber [/tests/command/goal]
+registration.py            365 DEBUG    unregisterSubscriber [/tests/command/cancel]
+registration.py            365 DEBUG    unregisterSubscriber [/whole_body_controller/follow_joint_trajectory/feedback]
+registration.py            365 DEBUG    unregisterSubscriber [/tests/command/status]
+registration.py            368 DEBUG    unregisterPublisher [/tests/visualization_marker_array]
+registration.py            368 DEBUG    unregisterPublisher [/whole_body_controller/follow_joint_trajectory/goal]
+registration.py            368 DEBUG    unregisterPublisher [/tests/command/feedback]
+registration.py            368 DEBUG    unregisterPublisher [/visualization_marker_array]
+registration.py            368 DEBUG    unregisterPublisher [/tests/introspection/publishers]
+registration.py            368 DEBUG    unregisterPublisher [/tests/blackboard]
+registration.py            368 DEBUG    unregisterPublisher [/rosout]
+registration.py            368 DEBUG    unregisterPublisher [/tests/command/result]
+registration.py            368 DEBUG    unregisterPublisher [/tf]
+registration.py            368 DEBUG    unregisterPublisher [/tests/tip]
+registration.py            368 DEBUG    unregisterPublisher [/move_base_simple/goal]
+registration.py            368 DEBUG    unregisterPublisher [/tests/ascii/tree]
+registration.py            368 DEBUG    unregisterPublisher [/tests/command/goal]
+registration.py            368 DEBUG    unregisterPublisher [/tests/log/tree]
+registration.py            368 DEBUG    unregisterPublisher [/tests/command/cancel]
+registration.py            368 DEBUG    unregisterPublisher [/tests/ascii/snapshot]
+registration.py            368 DEBUG    unregisterPublisher [/simulated_laser]
+registration.py            368 DEBUG    unregisterPublisher [/tests/command/status]
+registration.py            368 DEBUG    unregisterPublisher [/tests/dot/tree]
+registration.py            368 DEBUG    unregisterPublisher [/whole_body_controller/follow_joint_trajectory/cancel]
+registration.py            373 DEBUG    unregisterService [/tests/get_blackboard_variables]
+registration.py            373 DEBUG    unregisterService [/tests/get_attached_objects]
+registration.py            373 DEBUG    unregisterService [/tests/set_logger_level]
+registration.py            373 DEBUG    unregisterService [/tests/dump_state]
+registration.py            373 DEBUG    unregisterService [/tests/get_object_names]
+registration.py            373 DEBUG    unregisterService [/tests/update_rviz_markers]
+registration.py            373 DEBUG    unregisterService [/tests/close_blackboard_watcher]
+registration.py            373 DEBUG    unregisterService [/tests/update_world]
+registration.py            373 DEBUG    unregisterService [/tests/open_blackboard_watcher]
+registration.py            373 DEBUG    unregisterService [/tests/get_object_info]
+registration.py            373 DEBUG    unregisterService [/tests/get_loggers]
+registration.py            373 DEBUG    unregisterService [/tests/render]
+registration.py            373 DEBUG    unregisterService [/tests/tf2_frames]
+registration.py            385 DEBUG    registration cleanup: master calls complete
+core.py                    140 INFO     topic[/tests/visualization_marker_array] removing connection to /rviz
+core.py                    140 INFO     topic[/tests/command/feedback] removing connection to /tests
+tcpros_base.py             640 DEBUG    [/tests/command/feedback]: writing header
+core.py                    140 INFO     topic[/rosout] removing connection to /rosout
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:46223 (http://philipp:37227/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    140 INFO     topic[/tests/command/result] removing connection to /tests
+tcpros_base.py             640 DEBUG    [/tests/command/result]: writing header
+core.py                    140 INFO     topic[/tf] removing connection to /hsrb_timeopt_filter_node
+core.py                    140 INFO     topic[/tf] removing connection to /navigation_log_recorder
+core.py                    140 INFO     topic[/tf] removing connection to /hsrb/hsrb_grasp_state_observer
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:46223 (http://philipp:37227/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    140 INFO     topic[/tf] removing connection to /tests
+tcpros_base.py             640 DEBUG    [/tf]: writing header
+core.py                    140 INFO     topic[/tf] removing connection to /perspective_transformer
+core.py                    140 INFO     topic[/tf] removing connection to /tf_server
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:46223 (http://philipp:37227/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    140 INFO     topic[/tf] removing connection to /hsrb/wrist_wrench/compensation_node
+core.py                    140 INFO     topic[/tf] removing connection to /object_information_publisher
+core.py                    140 INFO     topic[/tf] removing connection to /hsrb/interactive_teleop
+core.py                    140 INFO     topic[/tf] removing connection to /move_base
+core.py                    140 INFO     topic[/tf] removing connection to /safety_velocity_limiter
+core.py                    140 INFO     topic[/tf] removing connection to /interactive_grasp_planner
+core.py                    140 INFO     topic[/tf] removing connection to /marker_based_localizer
+core.py                    140 INFO     topic[/tf] removing connection to /action_give
+core.py                    140 INFO     topic[/tf] removing connection to /hsrb/impedance_control
+core.py                    140 INFO     topic[/tf] removing connection to /pose_integrator
+core.py                    140 INFO     topic[/tf] removing connection to /hsrb/laser_scan_matcher_node
+core.py                    140 INFO     topic[/tf] removing connection to /collision_environment
+core.py                    140 INFO     topic[/tf] removing connection to /tabletop_segmentator
+core.py                    140 INFO     topic[/tf] removing connection to /action_put
+core.py                    140 INFO     topic[/tf] removing connection to /placement_area_detector
+core.py                    140 INFO     topic[/tf] removing connection to /base_path_planner
+core.py                    140 INFO     topic[/tf] removing connection to /laser_2d_localizer
+core.py                    140 INFO     topic[/tf] removing connection to /action_take
+core.py                    140 INFO     topic[/tf] removing connection to /viewpoint_controller
+core.py                    140 INFO     topic[/tf] removing connection to /rviz
+core.py                    140 INFO     topic[/tf] removing connection to /tf2_buffer_server
+core.py                    140 INFO     topic[/tf] removing connection to /tmc_map_merger
+core.py                    140 INFO     topic[/tf] removing connection to /action_pick_up
+core.py                    140 INFO     topic[/tests/command/goal] removing connection to /tests
+tcpros_base.py             640 DEBUG    [/tests/command/goal]: writing header
+core.py                    140 INFO     topic[/tests/command/cancel] removing connection to /tests
+tcpros_base.py             640 DEBUG    [/tests/command/cancel]: writing header
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:46223 (http://philipp:37227/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    140 INFO     topic[/simulated_laser] removing connection to /rviz
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:46223 (http://philipp:37227/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    140 INFO     topic[/tests/command/status] removing connection to /tests
+core.py                    140 INFO     topic[/tests/command/feedback] removing connection to http://philipp:37227/
+tcpros_base.py             640 DEBUG    [/tests/command/status]: writing header
+core.py                    140 INFO     topic[/whole_body_controller/follow_joint_trajectory/result] removing connection to http://philipp:46883/
+core.py                    143 ERROR    Unable to initiate TCP/IP socket to philipp:46223 (http://philipp:37227/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 600, in _validate_header
+    raise TransportInitError("remote error reported: %s"%header['error'])
+TransportInitError: remote error reported: node shutting down
+
+core.py                    140 INFO     topic[/joint_states] removing connection to http://philipp:42551/
+core.py                    143 ERROR    Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 737, in receive_once
+    self.stat_bytes += recv_buff(sock, b, p.buff_size)
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 104, in recv_buff
+    d = sock.recv(buff_size)
+error: [Errno 104] Connection reset by peer
+
+core.py                    140 INFO     topic[/tests/command/result] removing connection to http://philipp:37227/
+core.py                    137 DEBUG    receive_loop[/joint_states]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:36501/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:45837/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:45485/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:36341/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:45035/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:41069/
+core.py                    146 WARNING  Unknown error initiating TCP/IP socket to philipp:52791 (http://philipp:41069/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+AttributeError: 'NoneType' object has no attribute 'buff_size'
+
+topics.py                  329 ERROR    Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 326, in close
+    c.close()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 846, in close
+    self.socket.close()
+AttributeError: 'NoneType' object has no attribute 'close'
+
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:44011/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:34485/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:36985/
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:38659/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:34213/
+core.py                    146 WARNING  Unknown error initiating TCP/IP socket to philipp:37633 (http://philipp:34213/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 563, in connect
+    self.local_endpoint = self.socket.getsockname()
+AttributeError: 'NoneType' object has no attribute 'getsockname'
+
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:43355/
+core.py                    146 WARNING  Unknown error initiating TCP/IP socket to philipp:42863 (http://philipp:43355/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 562, in connect
+    self.read_header()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 657, in read_header
+    self._validate_header(read_ros_handshake_header(sock, self.read_buff, self.protocol.buff_size))
+AttributeError: 'NoneType' object has no attribute 'buff_size'
+
+topics.py                  329 ERROR    Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/topics.py", line 326, in close
+    c.close()
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 846, in close
+    self.socket.close()
+AttributeError: 'NoneType' object has no attribute 'close'
+
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:44597/
+core.py                    137 DEBUG    receive_loop[/tf]: done condition met, exited loop
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:43667/
+core.py                    140 INFO     topic[/tf] removing connection to http://philipp:37227/
+core.py                    140 INFO     topic[/tf_static] removing connection to http://philipp:36501/
+core.py                    140 INFO     topic[/tf_static] removing connection to http://philipp:43355/
+core.py                    137 DEBUG    receive_loop[/tf_static]: done condition met, exited loop
+core.py                    146 WARNING  Unknown error initiating TCP/IP socket to philipp:41001 (http://philipp:43667/): Traceback (most recent call last):
+  File "/opt/ros/melodic/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 563, in connect
+    self.local_endpoint = self.socket.getsockname()
+AttributeError: 'NoneType' object has no attribute 'getsockname'
+
+core.py                    137 DEBUG    receive_loop[/tf_static]: done condition met, exited loop
+core.py                    140 INFO     topic[/clock] removing connection to http://philipp:44597/
+core.py                    137 DEBUG    receive_loop[/clock]: done condition met, exited loop
+core.py                    140 INFO     topic[/whole_body_controller/follow_joint_trajectory/status] removing connection to http://philipp:46883/
+core.py                    140 INFO     topic[/tests/command/goal] removing connection to http://philipp:37227/
+core.py                    140 INFO     topic[/tests/command/cancel] removing connection to http://philipp:37227/
+core.py                    140 INFO     topic[/whole_body_controller/follow_joint_trajectory/feedback] removing connection to http://philipp:46883/
+core.py                    140 INFO     topic[/tests/command/status] removing connection to http://philipp:37227/
+masterslave.py             342 INFO     die
+logging.py                  47 INFO     [/tests]: deleting tmp test folder
+=============================== warnings summary ===============================
+test/test_integration_hsr.py::TestConstraints::()::test_laser_constraint_1
+  /opt/ros/melodic/lib/python2.7/dist-packages/urdf_parser_py/xml_reflection/basics.py:42: DeprecationWarning: This method will be removed in future versions.  Use 'list(elem)' or iteration over elem instead.
+    return node.getchildren()
+  /opt/ros/melodic/lib/python2.7/dist-packages/geometry_msgs/msg/_PoseArray.py:101: DeprecationWarning: integer argument expected, got float
+    buff.write(_get_struct_3I().pack(_x.header.seq, _x.header.stamp.secs, _x.header.stamp.nsecs))
+
+-- Docs: http://doc.pytest.org/en/latest/warnings.html
+==================== 1 failed, 2 warnings in 258.66 seconds ====================
+Wrote profile results to py.test.lprof
+Timer unit: 1e-06 s
+
+Total time: 154.992 s
+File: /home/philipp/bachelorarbeit/bp_ws/src/giskardpy/src/giskardpy/plugin_simulated_laser_scanner.py
+Function: update at line 38
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    38                                               @profile
+    39                                               def update(self):
+    40                                                   # self.logger.info("update called")
+    41                                                   # HSRB Laser Example Message
+    42                                                   # angle_min: -2.09999990463
+    43                                                   # angle_max: 2.09999990463
+    44                                                   # angle_increment: 0.00583333335817
+    45                                                   # time_increment: 0.0
+    46                                                   # scan_time: 0.0
+    47                                                   # range_min: 0.0500000007451
+    48                                                   # range_max: 60.0
+    49                                           
+    50                                                   #base_range_sensor_link
+    51       964     167841.0    174.1      0.1          relativ = self.get_robot().get_fk_pose(self.get_robot().get_root(), "base_range_sensor_link")
+    52       964       1155.0      1.2      0.0          relative = relativ.pose.position
+    53       964       1912.0      2.0      0.0          start_pos = []
+    54       964        859.0      0.9      0.0          end_pos = []
+    55    666124     827901.0      1.2      0.5          for f in np.arange(-2, 2, 0.0058):
+    56    665160    1054570.0      1.6      0.7              start_pos += [[relative.x, relative.y, relative.z + 0.05]]
+    57    665160    4363186.0      6.6      2.8              vec = Vector3(np.cos(f), np.sin(f), 0.0)
+    58    665160     649886.0      1.0      0.4              quat = relativ.pose.orientation
+    59    665160   55317657.0     83.2     35.7              rotation = rot.from_quat([quat.x, quat.y, quat.z, quat.w])
+    60    665160   50816296.0     76.4     32.8              vec += rotation.as_rotvec()
+    61    665160    2751991.0      4.1      1.8              vec *= 60
+    62                                                       #vec += relative #TODO
+    63    665160     786138.0      1.2      0.5              end_pos += [vec]
+    64       964   24487997.0  25402.5     15.8          points_hit = raytracing_pybullet(start_pos, end_pos)
+    65                                                   #print(points_hit)
+    66                                           
+    67       964     565867.0    587.0      0.4          collisions = LaserCollisions(self.get_robot(), len(points_hit))
+    68                                           
+    69    230189     206835.0      0.9      0.1          for i in points_hit:
+    70    229225    6798315.0     29.7      4.4              distance = np.linalg.norm(np.subtract(Vector3(relative.x, relative.y, relative.z), i))
+    71    229225     247230.0      1.1      0.2              if distance > 0.1:
+    72    229225    2692536.0     11.7      1.7                  collisions.add(LaserCollision(i, distance))
+    73                                           
+    74       964     196783.0    204.1      0.1          self.god_map.set_data(identifier.laser_data, collisions)
+    75                                           
+    76       964    1799280.0   1866.5      1.2          posearra = map(self.createpose, points_hit)
+    77       964     139877.0    145.1      0.1          par = PoseArray()
+    78       964        987.0      1.0      0.0          par.poses = posearra
+    79       964        890.0      0.9      0.0          par.header.frame_id = "map"
+    80       964      10635.0     11.0      0.0          par.header.stamp.secs = rospy.get_time()
+    81       964    1101188.0   1142.3      0.7          self.laser_publisher.publish(par)
+    82                                           
+    83       964       4354.0      4.5      0.0          return Status.RUNNING
+

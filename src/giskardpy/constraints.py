@@ -2400,7 +2400,7 @@ class LaserCollisionAvoidance(Constraint):
     max_acceleration = u'max_acceleration'
     goal_constraint = u'goal_constraint'
 
-    def __init__(self, god_map, joint_name, goal, weight=WEIGHT_BELOW_CA, max_velocity=1423, max_acceleration=1, idx=0,
+    def __init__(self, god_map, weight=WEIGHT_COLLISION_AVOIDANCE, max_velocity=1423, max_acceleration=1, idx=0,
                  goal_constraint=False):
         """
         TODO
@@ -2410,15 +2410,10 @@ class LaserCollisionAvoidance(Constraint):
         :param max_velocity: float, rad/s, default 1423, meaning the urdf/config limits are active
         """
         super(LaserCollisionAvoidance, self).__init__(god_map)
-        self.joint_name = joint_name
         self.goal_constraint = goal_constraint
+        self.idx = idx
 
-        if not self.get_robot().is_joint_continuous(joint_name):
-            raise ConstraintException(u'{} called with non continuous joint {}'.format(self.__class__.__name__,
-                                                                                       joint_name))
-
-        params = {self.goal: goal,
-                  self.weight: weight,
+        params = {self.weight: weight,
                   self.max_velocity: max_velocity,
                   self.max_acceleration: max_acceleration}
         self.save_params_on_god_map(params)
@@ -2447,7 +2442,7 @@ class LaserCollisionAvoidance(Constraint):
         #laser_scan = self.god_map.to_symbol(identifier.laser_data + ['angle_min'])
         #angle_min = laser_scan.angle_min
 
-        obstacle_position = Point3Input(self.god_map.to_symbol, prefix=identifier.laser_data + [self.idx, u'get_obstacle_position']).get_expression()
+        obstacle_position = Point3Input(self.god_map.to_symbol, prefix=identifier.laser_data + [u'external_collision', self.idx, u'obstacle_position']).get_expression()
 
         robot_position = \
             w.position_of(self.get_fk(self.get_robot().get_root(), self.get_robot().get_non_base_movement_root()))
@@ -2455,51 +2450,40 @@ class LaserCollisionAvoidance(Constraint):
 
         distance = w.euclidean_distance(obstacle_position, robot_position)
 
-        obstacle_vector = obstacle_position - robot_position
+        obstacle_vector = robot_position - obstacle_position
 
-        goaway_vector = -obstacle_vector
+        goaway_vector = obstacle_vector # * (-1)
 
-        temp_avoidance_distance = 2  #TODO Rosparam oder andere option
+        temp_avoidance_distance = 0.3  #TODO Rosparam oder andere option
 
-        goaway_vector = w.if_lower(distance, temp_avoidance_distance,
-                                   goaway_vector,
-                                   [0, 0, 0]
-                                   )
+        goaway_vector = w.if_less(distance, temp_avoidance_distance,
+                                   goaway_vector, [0, 0, 0, 0])
 
-        goaway_vector = w.scale(goaway_vector, temp_avoidance_distance)
+        newdistance = self.limit_velocity(temp_avoidance_distance, 0.1)
+        #newdistance = self.limit_velocity(temp_avoidance_distance, 0.005)
+
+        goaway_vector = w.scale(goaway_vector, newdistance)
+
+        self.add_debug_vector("obstacle_vector", obstacle_vector)
 
         weight = self.get_input_float(self.weight)
 
-        #max_acceleration = self.get_input_float(self.max_acceleration)
-        #max_velocity = w.Min(self.get_input_float(self.max_velocity),
-                             #self.get_robot().get_joint_velocity_limit_expr(self.joint_name))
-
-        #error = w.shortest_angular_distance(current_joint, joint_goal)
-        # capped_err = self.limit_acceleration(current_joint, error, max_acceleration, max_velocity)
-        #capped_err = self.limit_velocity(error, max_velocity)
-
-        # weight = self.magic_weight_function(w.Abs(error),
-        #                                     0.0, WEIGHTS[5],
-        #                                     np.pi / 8, WEIGHTS[4],
-        #                                     np.pi / 6, WEIGHTS[3],
-        #                                     np.pi / 4, WEIGHTS[1])
-
-        #weight = self.normalize_weight(max_velocity, weight)
+        normalized_weight = self.normalize_weight(0.1, weight)
 
         self.add_constraint(u'cx',
                             lower=goaway_vector[0],
                             upper=goaway_vector[0],
-                            weight=weight,
+                            weight=normalized_weight,
                             expression=robot_position[0],
                             goal_constraint=self.goal_constraint)
         self.add_constraint(u'cy',
                             lower=goaway_vector[1],
                             upper=goaway_vector[1],
-                            weight=weight,
+                            weight=normalized_weight,
                             expression=robot_position[1],
                             goal_constraint=self.goal_constraint)
 
 
     def __str__(self):
         s = super(LaserCollisionAvoidance, self).__str__()
-        return u'{}/{}'.format(s, self.joint_name)
+        return u'{}/{}'.format(s, self.idx)

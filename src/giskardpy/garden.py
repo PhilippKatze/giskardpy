@@ -37,6 +37,7 @@ from giskardpy.plugin_post_processing import PostProcessing
 from giskardpy.plugin_pybullet import WorldUpdatePlugin
 from giskardpy.plugin_send_trajectory import SendTrajectory
 from giskardpy.plugin_set_cmd import SetCmd
+from giskardpy.plugin_simulated_laser_scanner import SimulatedLaserScanner
 from giskardpy.plugin_time import TimePlugin
 from giskardpy.plugin_update_constraints import GoalToConstraints
 from giskardpy.plugin_visualization import VisualizationBehavior
@@ -153,13 +154,14 @@ def grow_tree():
     wait_for_goal = Sequence(u'wait for goal')
     wait_for_goal.add_child(TFPlugin(u'tf'))
     wait_for_goal.add_child(ConfigurationPlugin(u'js1'))
-    wait_for_goal.add_child(LaserScanner(u'laser scanner'))
+    #wait_for_goal.add_child(LaserScanner(u'laser scanner'))
     wait_for_goal.add_child(WorldUpdatePlugin(u'pybullet updater'))
     wait_for_goal.add_child(GoalReceived(u'has goal', action_server_name, MoveAction))
     wait_for_goal.add_child(ConfigurationPlugin(u'js2'))
-    # ----------------------------------------------
+    # -------------------------ro---------------------
     planning_3 = PluginBehavior(u'planning III', sleep=0)
     planning_3.add_plugin(CollisionChecker(u'coll'))
+    planning_3.add_plugin(SimulatedLaserScanner(u'simulated laser scanner'))
     # if god_map.safe_get_data(identifier.enable_collision_marker):
     #     planning_3.add_plugin(success_is_running(CPIMarker)(u'cpi marker'))
     planning_3.add_plugin(ControllerPlugin(u'controller'))

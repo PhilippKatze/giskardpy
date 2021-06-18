@@ -1,3 +1,4 @@
+from UserList import UserList
 from collections import OrderedDict, defaultdict, namedtuple
 
 import numpy as np
@@ -322,16 +323,12 @@ class Collisions(object):
 
 class LaserCollision(object):
     # TODO why no named tuple?
-    def __init__(self, obstacle_position, contact_normal, contact_distance):
+    def __init__(self, obstacle_position, contact_distance):
         self.obstacle_position = obstacle_position
         self.__contact_distance = contact_distance
-        self.__contact_normal = contact_normal
 
     def get_obstacle_position(self):
         return self.obstacle_position
-
-    def get_contact_normal_in_map(self):
-        return self.__contact_normal
 
     def get_contact_distance(self):
         return self.__contact_distance
@@ -348,19 +345,8 @@ class LaserCollisions(object):
         self.robot_root = self.robot.get_root()
         self.collision_list_size = collision_list_size
 
-        # @profile
-        def sort(x):
-            return x.get_contact_distance()
-
-        # @profile
-        def default_f():
-            return SortedList([self._default_collision()] * collision_list_size,
+        self.external_collision = SortedList([self._default_collision()] * collision_list_size,
                               key=lambda x: x.get_contact_distance())
-
-        self.default_result = default_f()
-
-        self.external_collision = defaultdict(default_f)
-        self.number_of_external_collisions = defaultdict(int)
 
     # @profile
     def add(self, collision):
@@ -370,30 +356,27 @@ class LaserCollisions(object):
         """
         #TODO Parameter anpassen
         collision = self.transform_closest_point(collision)
-
         self.external_collision.add(collision)
-        self.number_of_external_collisions = self.number_of_external_collisions + 1
+        #self.all_collisions.add(collision)
+
 
     def transform_closest_point(self, collision):
         """
         :type collision: LaserCollision
-        :rtype: Collision
+        :rtype: LaserCollision
         """
         return self.transform_external_collision(collision)
 
     def transform_external_collision(self, collision):
         """
         :type collision: LaserCollision
-        :rtype: Collision
+        :rtype: LaserCollisionCollision
         """
 
         return collision
 
     def _default_collision(self):
-        return Collision([0, 0, 0], [0, 0, 1], 100)
-
-    def get_number_of_external_collisions(self):
-        return self.number_of_external_collisions
+        return LaserCollision([0, 0, 0], 100)
 
     def __contains__(self, item):
         return item in self.external_collision

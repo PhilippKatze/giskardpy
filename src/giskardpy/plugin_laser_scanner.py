@@ -57,18 +57,19 @@ class LaserScanner(GiskardBehavior):
         # self.get_robot().get_non_base_movement_root
 
         #base_range_sensor_link
-        self.get_robot().get_fk_pose(self.get_robot().get_non_base_movement_root(), "base_range_sensor_link")
+        relative = (self.get_robot().get_fk_pose(self.get_robot().get_root(), self.get_robot().get_non_base_movement_root()).pose.position, "base_range_sensor_link")
         #TODO add to the coordinates of the obstcales
+
 
         laser_scan = self.mls
         angle = laser_scan.angle_min
 
-        collisions = LaserCollisions(self.get_robot(), laser_scan.ranges.size)
+        collisions = LaserCollisions(self.get_robot(), len(laser_scan.ranges))
 
         for i, llrange in enumerate(laser_scan.ranges):
             if laser_scan.range_min <= range <= laser_scan.range_max:
-                x = llrange * math.cos(angle)
-                y = llrange * math.sin(angle)
+                x = relative.x + llrange * math.cos(angle)
+                y = relative.y + llrange * math.sin(angle)
                 collisions.add(LaserCollision([x, y, 0], [0, 0, 0], 100))
                 # self.logger.info(str(x) + " " + str(y))
 
